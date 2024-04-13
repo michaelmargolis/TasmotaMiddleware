@@ -75,7 +75,7 @@ Use PlatformIO's "Upload File System Image" task to upload your configuration fi
 
 ## Usage
 
-See Using the Tasmota gateway here (tk)
+See Using the Tasmota gateway [here](hardware/Tasmota Gateway Getting Started.pdf)
 
 ## Contributing
 
