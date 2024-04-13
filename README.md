@@ -4,7 +4,7 @@
 
 This project enables an Arduino sketch to control mains power through wireless conectivity with open source smartplugs using Tasmota protocol. The software in this repository is middleware running on an ESP32  that communicates with the controlling Arduino and one or more Tasmota smart plugs. Each plug can be associated with an arduino pin that when set HIGH turns the plug on, and off when LOW.
 
-![Example wiring](hardware/example_wiring2.jpg)
+![Example wiring](hardware/example_wiring.jpg)
 In the example above, Arduino pin 11 turns the plug on when HIGH, off when LOW. 
 
 ## Functional Overview
@@ -22,7 +22,7 @@ New plugs (or plugs reset to modify configuration) must be paired using the Tasm
 Clone the repository to your local machine using:
 
 ```
-git clone https://github.com/your-username/tasmota-plug-controller.git
+git clone https://github.com/michaelmargolis/TasmotaMiddleware
 ```
 
 ### Opening in PlatformIO
