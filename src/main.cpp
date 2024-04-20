@@ -22,6 +22,8 @@ DebugOutput debug;  // for debug uncomment VERBOSE_OUTPUT in DebugOutput.h
 
 TasmotaPlugs tasmotaPlugs;
 
+static int _shadowPins[] = {0,1,2,3}; // for debug, leds on these pins show state for plug at corrosponding index
+
 static char _ssid[13];    // "plugAP" + 4 hex digits + null terminator
 static char _password[12]; // "pass" + 4 hex digits + null terminator
 bool apCreated = false;    // flag indicates acess point created
@@ -51,10 +53,12 @@ int setupWiFi() {
 }
 
 void checkPinState(PlugState* plug, int index) {
+    digitalWrite(_shadowPins[3], HIGH); // last shadow pin shows time in this function
     int currentPinState = digitalRead(plug->pin);
+    digitalWrite(_shadowPins[index], currentPinState);
     if (currentPinState != plug->pinState) {
         int currentPlugState = tasmotaPlugs.getPlugState(plug);
-        //debug << "Current state of plug on pin " << (int)plug->pin << " with MAC " <<  tasmotaPlugs.plugMac_4[index] << " is " << currentPlugState << "\n";
+        debug << "Current state of plug on pin " << plug->pin << " is " << currentPlugState << "\n";
 
         if (currentPlugState >= 0) {
             if ((currentPinState == HIGH && currentPlugState != 1) || 
@@ -71,6 +75,7 @@ void checkPinState(PlugState* plug, int index) {
             Serial.println(tasmotaPlugs.getErrorString(currentPlugState));
         }
     }
+    digitalWrite(_shadowPins[3], LOW);
 }
 
 
@@ -93,7 +98,19 @@ void checkSerialEvents() {
 }
 
 void setup() {
+    for(int i=0; i < 4; i++){
+       pinMode(_shadowPins[i], OUTPUT);
+       digitalWrite(_shadowPins[i], HIGH);
+       delay(500);
+       digitalWrite(_shadowPins[i], LOW);
+    }
     Serial.begin(115200);
+    for(int i=0; i < 4; i++){
+       digitalWrite(_shadowPins[i], HIGH);
+       delay(500);
+       digitalWrite(_shadowPins[i], LOW);
+    }
+    //delay(2000);
     Serial.println("Starting");
     while (setupWiFi() != TasmotaPlugs::RET_SUCCESS) {
         Serial.println("Retrying WiFi startup sequence");
@@ -119,9 +136,10 @@ void loop() {
         // here if one or more stations are connected to this access point
         for(int index = 0; index < tasmotaPlugs.plugs.size(); index++) {
             // process any pin state change for configured smartplugs
+            //Serial.printf("nbr plugs = %d, index = %d\n",tasmotaPlugs.plugs.size(), index);
             checkPinState(&tasmotaPlugs.plugs[index], index);
         }
     }
-    checkSerialEvents();
+    // checkSerialEvents();
 
 }

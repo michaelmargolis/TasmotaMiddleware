@@ -17,9 +17,12 @@ New plugs (or plugs reset to modify configuration) must be paired using the Tasm
 
 ## Development Environment Setup
 
+### Install VS Code and Platformio
+
+
 ### Cloning the Repository
 
-Clone the repository to your local machine using:
+Clone the repository to your local machine using: 
 
 ```
 git clone https://github.com/michaelmargolis/TasmotaMiddleware
@@ -27,7 +30,7 @@ git clone https://github.com/michaelmargolis/TasmotaMiddleware
 
 ### Opening in PlatformIO
 
-Open the cloned project in PlatformIO, available as a VS Code extension. This environment supports extensive library management and compatibility with various development boards.
+Open the cloned project folder in PlatformIO, available as a VS Code extension. This environment supports extensive library management and compatibility with various development boards.
 
 ## Configuring the Middleware
 
@@ -39,14 +42,14 @@ The `data` directory contains `config.json`, a template for your smart plug conf
 {
   "SPI_controlMode": false,
   "esp_pin_map": [10,9,8],
-  "plug_ip": [13,12],
-  "plug_mac4": ["EA2D", "E946"]
+  "plug_ip": [13,12, 11],
+  "plug_mac4": ["EA2D", "E946", "14F0"]
 }
 ```
 
 ### Uploading `config.json` to ESP32
 
-Use PlatformIO's "Upload File System Image" task to upload your configuration file to the ESP32. This step is crucial for the middleware to recognize and control your smart plugs.
+With the ESP32 USB port connected to the computer running Platformio, PlatformIO's "Upload File System Image" task to upload your configuration file to the ESP32. This step is crucial for the middleware to recognize and control your smart plugs. This task is accessed by clicking the Platformio (alien head) icon -> PROJECT TASKS -> esp32-c3 tasks -> Platform -> Upload File System Image 
 
 
 ## Pairing Middleware with Smart Plugs
@@ -66,7 +69,7 @@ Use PlatformIO's "Upload File System Image" task to upload your configuration fi
     - Switch the computer's Wi-Fi to the controller's SSID ('PlugAPxxxx').
     - Access the plug's homepage (`http://192.168.4.2` or as indicated) and navigate to the Information section to note the last four digits of the plug's MAC address.
     - Click the Console button on the home page and enter the following commands:
-      - type: IPAddress1 1.192.168.4.xxx (where xxx is the ip octet identifying this plug, this octet value and the MAC digits will be entered into the config.json)
+      - type: ipaddress1 1.192.168.4.xxx (where xxx is the ip octet identifying this plug, this octet value and the MAC digits will be entered into the config.json)
       - type: restart 1 (this will apply the change and restart the plug)
       - navigate your browswer to the new ip address to verify the change
 6. **Label the plug**

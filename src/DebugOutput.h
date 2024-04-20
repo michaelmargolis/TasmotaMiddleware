@@ -4,7 +4,7 @@
 #include <iostream>
 
 // Uncomment the following line to enable verbose output globally.
-// #define VERBOSE_OUTPUT
+#define VERBOSE_OUTPUT
 
 class DebugOutput {
 public:

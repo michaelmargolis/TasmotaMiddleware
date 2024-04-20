@@ -128,18 +128,19 @@ void Config::printConfig() {
     Serial.print("SPI Control Mode: ");
     Serial.println(SPI_controlMode ? "Enabled" : "Disabled");
 
-    Serial.println("ESP Pin Map:");
+    Serial.print("ESP Pin Map: ");
     for (auto pin : esp_pin_map) {
-        Serial.println(pin);
+        Serial.print(pin); Serial.print(", "); 
     }
 
-    Serial.println("Plug IP Octets:");
+    Serial.print("\nPlug IP Octets: ");
     for (auto ip : plug_ip) {
-        Serial.println(ip);
+        Serial.print(ip); Serial.print(", "); 
     }
 
-    Serial.println("Plug MAC Addresses:");
+    Serial.print("\nPlug MAC Addresses: ");
     for (auto& mac : plugMac_4) {
-        Serial.println(mac.c_str());
+        Serial.print(mac.c_str()); Serial.print(", "); 
     }
+    Serial.println("\n");
 }

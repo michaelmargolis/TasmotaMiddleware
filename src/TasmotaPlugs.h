@@ -12,6 +12,15 @@ struct PlugState {
     int pinState;   // Current state of the pin (HIGH or LOW)
 };
 
+struct EnergyValues {
+  float Voltage;     // Volts
+  float Current;     // Amps
+  float Power;       // Watts 
+  float Yesterday;   // kWatt hours
+  float Today;       // kWatt hours   
+  float Total;       // kWatt hours   
+};
+
 class TasmotaPlugs {
 public:
     TasmotaPlugs();
@@ -22,6 +31,7 @@ public:
     int setPlugState(PlugState* plug, bool state);
     int setPlugState(const std::string& url, bool state);
     int getRSSI(const std::string& url);
+    int getEnergyValues(const std::string& url, EnergyValues& values);
     static const char* getErrorString(int errorCode);
 
     std::vector<PlugState> plugs; // Vector of all plug states managed by this class

@@ -2,7 +2,7 @@
 ArduinoGatewayTest.inno
 
 Test sketch assumes LDR sensors are connected on analog pins 0 and 4
-with respective outputs on digital pins 11 and 12
+with respective outputs on digital pins 13 and 12
 
 Connect ICSP pins from Arduino to Gatway
 Note orientation of cable to ensure +5 volt pins connected together. 
@@ -28,7 +28,6 @@ public:
         maxReading = initialReading;  // Set initial maximum reading
         minReading = initialReading < minReading ? initialReading : minReading;  // Set initial minimum reading if below default
         updateThreshold(); // Initialize threshold based on initial readings
-        Serial.begin(9600);    // Start serial communication at 9600 bps
     }
 
     // Update threshold based on current max and min readings
@@ -72,11 +71,12 @@ public:
     }
 };
 
-LDRSensor sensor1(0, 11);  // LDR is connected to A0 and control pin is 11
+LDRSensor sensor1(0, 13);  // LDR is connected to A0 and control pin is 13
 LDRSensor sensor2(4, 12);  // LDR is connected to A4 and control pin is 12
 
 void setup() {
     Serial.begin(9600);    // Start serial communication at 9600 bps
+    testIcspPins();
     sensor1.begin();       // Initialize sensor 1
     sensor2.begin();       // Initialize sensor 2
 }
@@ -86,4 +86,15 @@ void loop() {
     sensor2.update();      // Update sensor 2 state
     //Serial.print(analogRead(0));   Serial.print(", "); Serial.println(analogRead(4)); // uncomment to show sensor readings
     delay(100); 
+}
+
+void testIcspPins() {
+  int pins[] = {11,13};
+  for(int i=0; i < 2; i++){
+    Serial.print("toggling pin "); Serial.println(pins[i]);
+     pinMode(pins[i], OUTPUT);
+     digitalWrite(pins[i], HIGH);
+     delay(4000);
+     digitalWrite(pins[i], LOW);
+  }
 }

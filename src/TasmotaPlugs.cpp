@@ -111,6 +111,35 @@ int TasmotaPlugs::getRSSI(const std::string& url) {
     return doc["StatusSTS"]["Wifi"]["RSSI"]; // Assuming RSSI is directly accessible and valid
 }
 
+ int TasmotaPlugs::getEnergyValues(const std::string& url, EnergyValues& values ) {
+    HTTPClient http;
+    std::string command = url + "/cm?cmnd=Status%2010";
+    http.begin(command.c_str());
+    int httpCode = http.GET();
+    if (httpCode != HTTP_CODE_OK) {
+        http.end();
+        return ERR_HTTP_REQUEST_FAILED;
+    }
+
+    StaticJsonDocument<500> doc;
+    DeserializationError error = deserializeJson(doc, http.getString());
+    http.end();
+    if (error) {
+        return ERR_JSON_ERROR;
+    }
+
+    JsonObject root = doc.as<JsonObject>();
+    JsonObject StatusSNS = root["StatusSNS"];
+    JsonObject ENERGY = StatusSNS["ENERGY"];
+    values.Voltage = ENERGY["Voltage"].as<float>();
+    values.Current = ENERGY["Current"].as<float>();
+    values.Power = ENERGY["Power"].as<float>();
+    values.Total = ENERGY["Total"].as<float>();
+    values.Yesterday = ENERGY["Yesterday"].as<float>();
+    values.Today = ENERGY["Today"].as<float>();
+    return RET_SUCCESS;
+}
+
 void TasmotaPlugs::initializeSPIForPlugs() {
     // Initialization code for SPI, assuming some setup like SPI.begin()
     Serial.println("SPI initialized for all configured plugs.");
