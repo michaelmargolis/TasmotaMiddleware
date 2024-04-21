@@ -7,10 +7,11 @@ TasmotaPlugs::TasmotaPlugs() {
     // Constructor body, if needed
 }
 
-void TasmotaPlugs::begin() {
+void TasmotaPlugs::begin(DebugOutput& Logger) {
+    logger = Logger;
     // Load configuration from file system
     if (!config.loadConfig()) {
-        Serial.println("Failed to load configuration!");
+        logger.info("Failed to load configuration!\n");
         return;
     }
 
@@ -19,18 +20,18 @@ void TasmotaPlugs::begin() {
 
     // Check if SPI control mode is enabled and apply configuration if necessary
     if (config.SPI_controlMode) {
-        Serial.println("Initializing plugs in SPI control mode.");
+        logger.info("Initializing plugs in SPI control mode.\n");
         initializeSPIForPlugs();
     } else {
-        Serial.println("Using default Pin control mode.");
+        logger.info("Using default Pin control mode.\n");
     }
 
     // Optionally print configuration data for debugging
     for (auto& plug : plugs) {
-        Serial.printf("Plug at IP octet %d with MAC %s is controlled by ESP pin %d\n",
+        logger.info("Plug at IP octet %d with MAC %s is controlled by ESP pin %d\n",
                       plug.ip_octet, config.plugMac_4[&plug - &plugs[0]].c_str(), plug.pin);
     }
-    Serial.println();
+    logger.info("\n");
 }
 
 void TasmotaPlugs::initPlugStates() {
@@ -142,7 +143,7 @@ int TasmotaPlugs::getRSSI(const std::string& url) {
 
 void TasmotaPlugs::initializeSPIForPlugs() {
     // Initialization code for SPI, assuming some setup like SPI.begin()
-    Serial.println("SPI initialized for all configured plugs.");
+    logger.info("SPI initialized for all configured plugs.\n");
 }
 
 const char* TasmotaPlugs::getErrorString(int errorCode) {

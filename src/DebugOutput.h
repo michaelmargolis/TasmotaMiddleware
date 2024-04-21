@@ -1,31 +1,29 @@
-#ifndef DEBUG_OUTPUT_H
-#define DEBUG_OUTPUT_H
+#ifndef DEBUGOUTPUT_H
+#define DEBUGOUTPUT_H
 
-#include <iostream>
-
-// Uncomment the following line to enable verbose output globally.
-#define VERBOSE_OUTPUT
+#include <Arduino.h>
+#include <stdarg.h>
 
 class DebugOutput {
-public:
-    template<typename T>
-    DebugOutput& operator<<(const T& msg) {
-        #ifdef VERBOSE_OUTPUT
-        std::cout << msg;
-        #endif
-        return *this;
-    }
+private:
+    uint8_t verbosityLevel;
+    Stream* outputStream;
 
-    // Specialization for std::ostream manipulators (e.g., std::endl)
-    DebugOutput& operator<<(std::ostream& (*pf)(std::ostream&)) {
-        #ifdef VERBOSE_OUTPUT
-        std::cout << pf;
-        #endif
-        return *this;
-    }
+public:
+    // Constructor
+    DebugOutput();
+
+    // Begin method to set up the logging system
+    void begin(uint8_t level, Stream& stream = Serial);
+
+    // Methods for printing messages
+    void info(const char* format, ...);
+    void debug(const char* format, ...);
+
+private:
+    // Helper method for processing variadic arguments
+    void printFormatted(const char* format, va_list args);
 };
 
-// Global debug object declaration
-extern DebugOutput debug;
+#endif // DEBUGOUTPUT_H
 
-#endif // DEBUG_OUTPUT_H

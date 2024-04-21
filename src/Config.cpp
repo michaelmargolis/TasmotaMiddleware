@@ -1,6 +1,7 @@
 #include "Config.h"
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include "DebugOutput.h"
 
 bool Config::loadConfig() {
     if (!LittleFS.begin()) {

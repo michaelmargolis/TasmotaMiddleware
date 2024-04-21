@@ -18,9 +18,10 @@
 #include "TasmotaPlugs.h"
 #include "DebugOutput.h"
 
-DebugOutput debug;  // for debug uncomment VERBOSE_OUTPUT in DebugOutput.h
 
 TasmotaPlugs tasmotaPlugs;
+const int VERBOSITY_LEVEL = 1; // 0 = no output, 1 = info only, 2 = info and debug
+DebugOutput logger;
 
 static int _shadowPins[] = {0,1,2,3}; // for debug, leds on these pins show state for plug at corrosponding index
 
@@ -42,11 +43,11 @@ int setupWiFi() {
 
 
         if (!WiFi.softAP(_ssid, _password)) {
-            Serial.println("Failed to create access point");
+            logger.info("Failed to create access point\n");
             return TasmotaPlugs::ERR_HTTP_REQUEST_FAILED; 
         } else {
             apCreated = true;
-            Serial.printf("Access Point created with SSID: %s \n", _ssid);
+            logger.info("Access Point created with SSID: %s \n", _ssid);
         }
     }
     return TasmotaPlugs::RET_SUCCESS; 
@@ -58,21 +59,20 @@ void checkPinState(PlugState* plug, int index) {
     digitalWrite(_shadowPins[index], currentPinState);
     if (currentPinState != plug->pinState) {
         int currentPlugState = tasmotaPlugs.getPlugState(plug);
-        debug << "Current state of plug on pin " << plug->pin << " is " << currentPlugState << "\n";
+        logger.debug("Current state of plug on pin %d is  %d\n",  plug->pin, currentPlugState);
 
         if (currentPlugState >= 0) {
             if ((currentPinState == HIGH && currentPlugState != 1) || 
                 (currentPinState == LOW && currentPlugState != 0)) {
                 if(currentPinState == HIGH )   
-                   Serial.printf("Pin %d went HIGH, Sending 'Power On' command.\n", plug->pin );
+                   logger.info("Pin %d went HIGH, Sending 'Power On' command.\n", plug->pin );
                 else
-                   Serial.printf("Pin %d went LOW, Sending 'Power Off' command.\n", plug->pin);   
+                   logger.info("Pin %d went LOW, Sending 'Power Off' command.\n", plug->pin);   
                 tasmotaPlugs.setPlugState(plug, currentPinState == HIGH);
             }
             plug->pinState = currentPinState; // Update pinState
         } else {
-            Serial.print("Error getting plug status: ");
-            Serial.println(tasmotaPlugs.getErrorString(currentPlugState));
+            logger.info("Error getting plug status: %s\n", tasmotaPlugs.getErrorString(currentPlugState));
         }
     }
     digitalWrite(_shadowPins[3], LOW);
@@ -80,7 +80,7 @@ void checkPinState(PlugState* plug, int index) {
 
 
 void processConfigUpdate(String newConfig){
-    Serial.printf("new config is [%s]\n", newConfig.c_str());
+    logger.info("new config is [%s]\n", newConfig.c_str());
 }
 
 void checkSerialEvents() {
@@ -104,27 +104,30 @@ void setup() {
        delay(500);
        digitalWrite(_shadowPins[i], LOW);
     }
-    Serial.begin(115200);
+    logger.begin(2);
+    if(VERBOSITY_LEVEL > 0)
+      Serial.begin(115200);
+
     for(int i=0; i < 4; i++){
        digitalWrite(_shadowPins[i], HIGH);
        delay(500);
        digitalWrite(_shadowPins[i], LOW);
     }
     //delay(2000);
-    Serial.println("Starting");
+    logger.info("Starting\n");
     while (setupWiFi() != TasmotaPlugs::RET_SUCCESS) {
-        Serial.println("Retrying WiFi startup sequence");
+        logger.info("Retrying WiFi startup sequence\n");
     }
-    Serial.print("Access Point started, IP Address: "); 
-    Serial.println(WiFi.softAPIP());
+    String ipString = WiFi.softAPIP().toString();
+    logger.info("Access Point started, IP Address: %s\n", ipString.c_str());
 
     if (!LittleFS.begin()) {
-        Serial.println("An Error has occurred while mounting LittleFS");
+        logger.info("An Error has occurred while mounting LittleFS\n");
     }
     delay(1000);
-    tasmotaPlugs.begin();
+    tasmotaPlugs.begin(logger);
     tasmotaPlugs.config.printConfig();
-    Serial.flush();
+
     for(int i = 0; i < tasmotaPlugs.plugs.size(); i++) {
       pinMode(tasmotaPlugs.plugs[i].pin, INPUT_PULLDOWN);  // Initialize sense pin as input with pull-down resistor
     }
@@ -136,7 +139,7 @@ void loop() {
         // here if one or more stations are connected to this access point
         for(int index = 0; index < tasmotaPlugs.plugs.size(); index++) {
             // process any pin state change for configured smartplugs
-            //Serial.printf("nbr plugs = %d, index = %d\n",tasmotaPlugs.plugs.size(), index);
+            //logger.info("nbr plugs = %d, index = %d\n",tasmotaPlugs.plugs.size(), index);
             checkPinState(&tasmotaPlugs.plugs[index], index);
         }
     }

@@ -4,10 +4,11 @@
 #include <vector>
 #include <string>
 #include <Arduino.h>
-#include "Config.h"  // Include the Config class to handle configuration tasks
+#include "Config.h" 
+#include "DebugOutput.h"
 
 struct PlugState {
-    int pin;        // GPIO pin number used to control this plug
+    int pin;        // ESP digital pin number used to control this plug
     int ip_octet;   // Last octet of the IP address for the plug
     int pinState;   // Current state of the pin (HIGH or LOW)
 };
@@ -24,7 +25,7 @@ struct EnergyValues {
 class TasmotaPlugs {
 public:
     TasmotaPlugs();
-    void begin();
+    void begin(DebugOutput& Logger );
     void initPlugStates();
     int getPlugState(PlugState* plug);
     int getPlugState(const std::string& url);
@@ -53,6 +54,7 @@ private:
     
     std::string ip_base_url = "http://192.168.4."; // Default base URL
     static constexpr int defaultPinState = -1; // Default state for pins if no configuration is available
+    DebugOutput logger; 
 
 };
 
