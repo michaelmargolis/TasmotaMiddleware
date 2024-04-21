@@ -1,0 +1,7 @@
+chatGPT prompt:
+
+Create an arduino sketch named ArduinoGatewayTest.ino that will monitor two LDR sensors and set associated pins on when the sensor level drop below a threshold.
+
+Create an inline class for an LDR with a begin method with two arguments, analog pin connected to the LDR and the digital pin that will be switch when the threshold is reached. The threshold should be between the maximum and minimum LDR readings where the max reading defaults to the value at startup but adjusts to subsequent sensor readings while the sketch is running.
+
+Impliment simple logic to prevent flicker when the light level is near the threshold. Add Serial.print statements to show the sensor reading  at the time the output state changes.

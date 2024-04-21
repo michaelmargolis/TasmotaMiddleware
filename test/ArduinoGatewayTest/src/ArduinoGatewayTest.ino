@@ -91,10 +91,10 @@ void loop() {
 void testIcspPins() {
   int pins[] = {11,13};
   for(int i=0; i < 2; i++){
-    Serial.print("toggling pin "); Serial.println(pins[i]);
+     Serial.print("toggling pin "); Serial.println(pins[i]);
      pinMode(pins[i], OUTPUT);
      digitalWrite(pins[i], HIGH);
-     delay(4000);
+     delay(500);
      digitalWrite(pins[i], LOW);
   }
 }
