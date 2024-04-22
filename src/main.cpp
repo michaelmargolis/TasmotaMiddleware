@@ -19,11 +19,12 @@
 #include "DebugOutput.h"
 
 
-TasmotaPlugs tasmotaPlugs;
-const int VERBOSITY_LEVEL = 1; // 0 = no output, 1 = info only, 2 = info and debug
+#define  SPOOF_MAC "3341"  // overrides hardware MAC if defined 
+
+const int VERBOSITY_LEVEL = 0; // 0 = no output, 1 = info only, 2 = info and debug
 DebugOutput logger;
 
-static int _shadowPins[] = {0,1,2,3}; // for debug, leds on these pins show state for plug at corrosponding index
+TasmotaPlugs tasmotaPlugs;
 
 static char _ssid[13];    // "plugAP" + 4 hex digits + null terminator
 static char _password[12]; // "pass" + 4 hex digits + null terminator
@@ -33,15 +34,17 @@ int setupWiFi() {
     if (!apCreated) {
         WiFi.mode(WIFI_MODE_APSTA);
 
-        uint8_t mac[6];
-        WiFi.softAPmacAddress(mac);
-        snprintf(_ssid, sizeof(_ssid), "plugAP%02X%02X", mac[4], mac[5]);
-        snprintf(_password, sizeof(_password), "pass%02X%02X", mac[4], mac[5]);
-
-        //snprintf(_ssid, sizeof(_ssid), "plugAP46ED");
-        //snprintf(_password, sizeof(_password), "pass46ED");
-
-
+        #if defined SPOOF_MAC
+          snprintf(_ssid, sizeof(_ssid), "plugAP%s", SPOOF_MAC);
+          snprintf(_password, sizeof(_password), "pass%s", SPOOF_MAC);
+        #else
+          // use ESP hardware MAC
+          uint8_t mac[6];
+          WiFi.softAPmacAddress(mac);
+          snprintf(_ssid, sizeof(_ssid), "plugAP%02X%02X", mac[4], mac[5]);
+          snprintf(_password, sizeof(_password), "pass%02X%02X", mac[4], mac[5]);
+        #endif 
+        
         if (!WiFi.softAP(_ssid, _password)) {
             logger.info("Failed to create access point\n");
             return TasmotaPlugs::ERR_HTTP_REQUEST_FAILED; 
@@ -54,9 +57,7 @@ int setupWiFi() {
 }
 
 void checkPinState(PlugState* plug, int index) {
-    digitalWrite(_shadowPins[3], HIGH); // last shadow pin shows time in this function
     int currentPinState = digitalRead(plug->pin);
-    digitalWrite(_shadowPins[index], currentPinState);
     if (currentPinState != plug->pinState) {
         int currentPlugState = tasmotaPlugs.getPlugState(plug);
         logger.debug("Current state of plug on pin %d is  %d\n",  plug->pin, currentPlugState);
@@ -75,7 +76,6 @@ void checkPinState(PlugState* plug, int index) {
             logger.info("Error getting plug status: %s\n", tasmotaPlugs.getErrorString(currentPlugState));
         }
     }
-    digitalWrite(_shadowPins[3], LOW);
 }
 
 
@@ -97,22 +97,31 @@ void checkSerialEvents() {
     }
 }
 
+int states[] = {-1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+void setupX() {
+   Serial.begin(115200); 
+   for(int i=0; i < 11; i++){
+     pinMode(i, INPUT_PULLDOWN);
+   }
+
+   while(1){
+      for(int i=0; i < 11; i++){
+        int state = digitalRead(i);
+        if(state != states[i]){
+            Serial.printf("pin %d state changed to %d\n", i, state);
+            states[i] = state;
+        }         
+      }
+   }
+
+
+}     
 void setup() {
-    for(int i=0; i < 4; i++){
-       pinMode(_shadowPins[i], OUTPUT);
-       digitalWrite(_shadowPins[i], HIGH);
-       delay(500);
-       digitalWrite(_shadowPins[i], LOW);
-    }
-    logger.begin(2);
+   
+    logger.begin(VERBOSITY_LEVEL);
     if(VERBOSITY_LEVEL > 0)
       Serial.begin(115200);
 
-    for(int i=0; i < 4; i++){
-       digitalWrite(_shadowPins[i], HIGH);
-       delay(500);
-       digitalWrite(_shadowPins[i], LOW);
-    }
     //delay(2000);
     logger.info("Starting\n");
     while (setupWiFi() != TasmotaPlugs::RET_SUCCESS) {
@@ -135,7 +144,7 @@ void setup() {
 }
 
 void loop() {
-    if (WiFi.softAPgetStationNum() > 0) {
+    if(WiFi.softAPgetStationNum() > 0) {
         // here if one or more stations are connected to this access point
         for(int index = 0; index < tasmotaPlugs.plugs.size(); index++) {
             // process any pin state change for configured smartplugs
