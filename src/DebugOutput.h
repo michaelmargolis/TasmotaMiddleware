@@ -6,7 +6,7 @@
 
 class DebugOutput {
 private:
-    uint8_t verbosityLevel;
+    int verbosityLevel;
     Stream* outputStream;
 
 public:
@@ -14,11 +14,12 @@ public:
     DebugOutput();
 
     // Begin method to set up the logging system
-    void begin(uint8_t level, Stream& stream = Serial);
+    void begin(int level, Stream& stream = Serial);
 
     // Methods for printing messages
     void info(const char* format, ...);
     void debug(const char* format, ...);
+    void error(const char* format, ...);
 
 private:
     // Helper method for processing variadic arguments

@@ -24,14 +24,13 @@ bool Config::loadConfig() {
         return false;
     }
 
-    SPI_controlMode = doc["SPI_controlMode"];
     JsonArray esp_pin_map_json = doc["esp_pin_map"];
     JsonArray plug_ip_json = doc["plug_ip"];
-    JsonArray plug_mac4_json = doc["plug_mac4"];
+    JsonArray plugs_per_ip_json = doc["plugs_per_ip"];
 
     esp_pin_map.clear();
     plug_ip.clear();
-    plugMac_4.clear();
+    plugs_per_ip.clear();
 
     for (int pin : esp_pin_map_json) {
         esp_pin_map.push_back(pin);
@@ -39,8 +38,8 @@ bool Config::loadConfig() {
     for (int ip : plug_ip_json) {
         plug_ip.push_back(ip);
     }
-    for (const char* mac : plug_mac4_json) {
-        plugMac_4.push_back(std::string(mac));
+    for (int count : plugs_per_ip_json) {
+        plugs_per_ip.push_back(count);
     }
 
     return true;
@@ -57,11 +56,10 @@ void Config::writeConfigToStream(const std::string& ssid, Stream &outputStream) 
     StaticJsonDocument<1024> doc;
     JsonObject root = doc.to<JsonObject>();
     root["plugApMac4"] = ssid;  // Add SSID to JSON object
-    root["SPI_controlMode"] = SPI_controlMode;
 
     JsonArray esp_pin_map_json = root.createNestedArray("esp_pin_map");
     JsonArray plug_ip_json = root.createNestedArray("plug_ip");
-    JsonArray plug_mac4_json = root.createNestedArray("plug_mac4");
+    JsonArray plugs_per_ip_json = root.createNestedArray("plugs_per_ip");
 
     for (int pin : esp_pin_map) {
         esp_pin_map_json.add(pin);
@@ -69,8 +67,8 @@ void Config::writeConfigToStream(const std::string& ssid, Stream &outputStream) 
     for (int ip : plug_ip) {
         plug_ip_json.add(ip);
     }
-    for (const std::string& mac : plugMac_4) {
-        plug_mac4_json.add(mac.c_str());
+    for (int count : plugs_per_ip) {
+        plugs_per_ip_json.add(count);
     }
 
     serializeJson(doc, outputStream);
@@ -98,11 +96,10 @@ bool Config::saveConfig() {
 
     StaticJsonDocument<1024> doc;
     JsonObject root = doc.to<JsonObject>();
-    root["SPI_controlMode"] = SPI_controlMode;
 
     JsonArray esp_pin_map_json = root.createNestedArray("esp_pin_map");
     JsonArray plug_ip_json = root.createNestedArray("plug_ip");
-    JsonArray plug_mac4_json = root.createNestedArray("plug_mac4");
+    JsonArray plugs_per_ip_json = root.createNestedArray("plugs_per_ip");
 
     for (int pin : esp_pin_map) {
         esp_pin_map_json.add(pin);
@@ -110,8 +107,8 @@ bool Config::saveConfig() {
     for (int ip : plug_ip) {
         plug_ip_json.add(ip);
     }
-    for (const std::string& mac : plugMac_4) {
-        plug_mac4_json.add(mac.c_str());
+    for (int count : plugs_per_ip) {
+        plugs_per_ip_json.add(count);
     }
 
     if (serializeJson(doc, configFile) == 0) {
@@ -126,9 +123,6 @@ bool Config::saveConfig() {
 
 void Config::printConfig() {
     Serial.println("Configuration Data:");
-    Serial.print("SPI Control Mode: ");
-    Serial.println(SPI_controlMode ? "Enabled" : "Disabled");
-
     Serial.print("ESP Pin Map: ");
     for (auto pin : esp_pin_map) {
         Serial.print(pin); Serial.print(", "); 
@@ -139,9 +133,9 @@ void Config::printConfig() {
         Serial.print(ip); Serial.print(", "); 
     }
 
-    Serial.print("\nPlug MAC Addresses: ");
-    for (auto& mac : plugMac_4) {
-        Serial.print(mac.c_str()); Serial.print(", "); 
+    Serial.print("\nPlugs per IP Address: ");
+    for (int count : plugs_per_ip) {
+        Serial.print(count); Serial.print(", "); 
     }
     Serial.println("\n");
 }

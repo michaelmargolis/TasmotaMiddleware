@@ -2,9 +2,18 @@
 
 DebugOutput::DebugOutput() : verbosityLevel(0), outputStream(nullptr) {}
 
-void DebugOutput::begin(uint8_t level, Stream& stream) {
+void DebugOutput::begin(int level, Stream& stream) {
     this->verbosityLevel = level;
     this->outputStream = &stream;
+}
+
+void DebugOutput::error(const char* format, ...) {
+    if (this->verbosityLevel >= 0) {
+        va_list args;
+        va_start(args, format);
+        printFormatted(format, args);
+        va_end(args);
+    }
 }
 
 void DebugOutput::info(const char* format, ...) {

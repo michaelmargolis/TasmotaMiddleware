@@ -8,53 +8,56 @@ TasmotaPlugs::TasmotaPlugs() {
 }
 
 void TasmotaPlugs::begin(DebugOutput& Logger) {
-    logger = Logger;
+    log = Logger;
     // Load configuration from file system
     if (!config.loadConfig()) {
-        logger.info("Failed to load configuration!\n");
+        log.info("Failed to load configuration!\n");
         return;
     }
 
     // Initialize plug states based on loaded configuration
     initPlugStates();
 
-    // Check if SPI control mode is enabled and apply configuration if necessary
-    if (config.SPI_controlMode) {
-        logger.info("Initializing plugs in SPI control mode.\n");
-        initializeSPIForPlugs();
-    } else {
-        logger.info("Using default Pin control mode.\n");
-    }
-
     // Optionally print configuration data for debugging
-    for (auto& plug : plugs) {
-        logger.info("Plug at IP octet %d with MAC %s is controlled by ESP pin %d\n",
-                      plug.ip_octet, config.plugMac_4[&plug - &plugs[0]].c_str(), plug.pin);
+    showPlugConfiguration();
+}
+
+void TasmotaPlugs::showPlugConfiguration() {
+    for (size_t ipIndex = 0; ipIndex < plugs.size(); ++ipIndex) {
+        for (size_t subPlugIndex = 0; subPlugIndex < plugs[ipIndex].size(); ++subPlugIndex) {
+            PlugState &plug = plugs[ipIndex][subPlugIndex];
+            log.info("Device at IP %s%d has index %zu, subIndex %zu\n",  ip_base_url.c_str(), plug.ip_octet, ipIndex, subPlugIndex);
+        }
     }
-    logger.info("\n");
+    log.info("\n");  
 }
 
 void TasmotaPlugs::initPlugStates() {
-    // Clear existing plug states to prepare for new configuration
     plugs.clear();
-    for (size_t i = 0; i < config.plug_ip.size(); ++i) {
-        PlugState newPlug;
-        newPlug.ip_octet = config.plug_ip[i]; // Assume ip_octet is the index or identifier
-        newPlug.pin = (i < config.esp_pin_map.size()) ? config.esp_pin_map[i] : defaultPinState;
-        newPlug.pinState = defaultPinState; // Default or initial state, can be updated later
-        plugs.push_back(newPlug);
+    for (size_t ipIndex = 0; ipIndex < config.plug_ip.size(); ++ipIndex) {
+        std::vector<PlugState> subPlugs;
+        for (int subPlugIndex = 0; subPlugIndex < config.plugs_per_ip[ipIndex]; ++subPlugIndex) {
+            PlugState newPlug;
+            newPlug.ip_octet = config.plug_ip[ipIndex];
+            newPlug.sub_plug_index = subPlugIndex;
+            newPlug.pin = config.esp_pin_map[ipIndex];
+            newPlug.pinState = defaultPinState;
+            subPlugs.push_back(newPlug);
+        }
+        plugs.push_back(subPlugs);
     }
 }
 
-int TasmotaPlugs::getPlugState(PlugState* plug) {
-    if (plug == nullptr) {
+int TasmotaPlugs::getPlugState(int ipIndex, int subPlugIndex) {
+    if (ipIndex >= plugs.size() || subPlugIndex >= plugs[ipIndex].size()) {
         return ERR_PLUG_REF_INVALID;
     }
-    std::string url = ip_base_url + std::to_string(plug->ip_octet);
-    return getPlugState(url);
+    PlugState* plug = &plugs[ipIndex][subPlugIndex];
+    return getPlugState(getIPAddress(*plug));
 }
 
 int TasmotaPlugs::getPlugState(const std::string& url) {
+    log.debug("getting state for plag at %s\n", url.c_str());
     HTTPClient http;
     std::string command = url +  "/cm?cmnd=Power";
     http.begin(command.c_str());
@@ -75,12 +78,12 @@ int TasmotaPlugs::getPlugState(const std::string& url) {
     return (strcmp(state, "ON") == 0) ? 1 : 0;
 }
 
-int TasmotaPlugs::setPlugState(PlugState* plug, bool state) {
-    if (plug == nullptr) {
+int TasmotaPlugs::setPlugState(int ipIndex, int subPlugIndex, bool state) {
+    if (ipIndex >= plugs.size() || subPlugIndex >= plugs[ipIndex].size()) {
         return ERR_PLUG_REF_INVALID;
     }
-    std::string url = ip_base_url + std::to_string(plug->ip_octet);
-    return setPlugState(url, state);
+    PlugState* plug = &plugs[ipIndex][subPlugIndex];
+    return setPlugState(getIPAddress(*plug), state);
 }
 
 int TasmotaPlugs::setPlugState(const std::string& url, bool state) {
@@ -92,9 +95,11 @@ int TasmotaPlugs::setPlugState(const std::string& url, bool state) {
     return (httpCode == HTTP_CODE_OK) ? RET_SUCCESS : ERR_TASMOTA_REQUEST_FAILED;
 }
 
-int TasmotaPlugs::getRSSI(const std::string& url) {
+ int TasmotaPlugs::getRSSI(int ipIndex, int subPlugIndex){
+    PlugState* plug = &plugs[ipIndex][subPlugIndex];
+ 
     HTTPClient http;
-    std::string command = url + "/cm?cmnd=Status%2011";
+    std::string command = getIPAddress(*plug) + "/cm?cmnd=Status%2011";
     http.begin(command.c_str());
     int httpCode = http.GET();
     if (httpCode != HTTP_CODE_OK) {
@@ -102,19 +107,22 @@ int TasmotaPlugs::getRSSI(const std::string& url) {
         return ERR_HTTP_REQUEST_FAILED;
     }
 
-    StaticJsonDocument<300> doc;
+    StaticJsonDocument<600> doc;
     DeserializationError error = deserializeJson(doc, http.getString());
     http.end();
     if (error) {
+        log.error("DeserializationError: %s\n", error.c_str());
+        log.error("heap free = %ld\n", ESP.getMaxAllocHeap());
         return ERR_JSON_ERROR;
     }
 
     return doc["StatusSTS"]["Wifi"]["RSSI"]; // Assuming RSSI is directly accessible and valid
 }
 
- int TasmotaPlugs::getEnergyValues(const std::string& url, EnergyValues& values ) {
+ int TasmotaPlugs::getEnergyValues(int ipIndex, int subPlugIndex, EnergyValues& values) {
+    PlugState* plug = &plugs[ipIndex][subPlugIndex];
     HTTPClient http;
-    std::string command = url + "/cm?cmnd=Status%2010";
+    std::string command = getIPAddress(*plug) + "/cm?cmnd=Status%2010";
     http.begin(command.c_str());
     int httpCode = http.GET();
     if (httpCode != HTTP_CODE_OK) {
@@ -141,10 +149,6 @@ int TasmotaPlugs::getRSSI(const std::string& url) {
     return RET_SUCCESS;
 }
 
-void TasmotaPlugs::initializeSPIForPlugs() {
-    // Initialization code for SPI, assuming some setup like SPI.begin()
-    logger.info("SPI initialized for all configured plugs.\n");
-}
 
 const char* TasmotaPlugs::getErrorString(int errorCode) {
     switch (errorCode) {
@@ -158,4 +162,10 @@ const char* TasmotaPlugs::getErrorString(int errorCode) {
         case ERR_PLUG_REF_INVALID: return "Invalid plug reference";
         default: return "Unknown error";
     }
+}
+
+std::string TasmotaPlugs::getIPAddress(PlugState& plug) {
+    // Construct the full URL using the ip_octet from the plug
+    full_ip_address = ip_base_url + std::to_string(plug.ip_octet);
+    return full_ip_address;
 }

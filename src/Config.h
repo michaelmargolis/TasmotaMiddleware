@@ -17,8 +17,7 @@ public:
 
     std::vector<int> esp_pin_map;
     std::vector<int> plug_ip;
-    std::vector<std::string> plugMac_4;
-    bool SPI_controlMode = false;
+    std::vector<int> plugs_per_ip;
 
 private:
     bool internalLoadConfig();
