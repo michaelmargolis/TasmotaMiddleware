@@ -1,6 +1,5 @@
 {
-  "SPI_controlMode": false,
-  "esp_pin_map": [10, 8, 9],
+  "esp_pin_map": [6,7],
   "plug_ip": [13,12],
-  "plug_mac4": ["EA2D", "E946"]
+  "plugs_per_ip":[1,1]
 }
