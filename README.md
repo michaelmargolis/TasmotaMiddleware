@@ -40,8 +40,8 @@ The `data` directory contains `config.json`, a template for your smart plug conf
 
 ```json
 {
-  "SPI_controlMode": false,
-  "esp_pin_map": [10,9,8],
+  "I2C_controlMode": true,
+  "esp_pin_map": [6,7],
   "plug_ip": [13,12, 11],
   "plug_mac4": ["EA2D", "E946", "14F0"]
 }
