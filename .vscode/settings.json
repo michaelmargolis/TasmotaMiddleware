@@ -48,6 +48,12 @@
         "cstring": "cpp",
         "ctime": "cpp",
         "unordered_set": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "bitset": "cpp",
+        "chrono": "cpp",
+        "list": "cpp",
+        "ratio": "cpp",
+        "regex": "cpp",
+        "thread": "cpp"
     }
 }

@@ -2,10 +2,14 @@
 
 ## Overview
 
-This project enables an Arduino sketch to control mains power through wireless conectivity with open source smartplugs using Tasmota protocol. The software in this repository is middleware running on an ESP32  that communicates with the controlling Arduino and one or more Tasmota smart plugs. Each plug can be associated with an arduino pin that when set HIGH turns the plug on, and off when LOW.
+This project enables an Arduino sketch to control mains power through wireless conectivity with open source smartplugs using Tasmota protocol. The software in this repository is middleware running on an ESP32  that communicates with the controlling Arduino and one or two Tasmota smart plugs that can be associated with an arduino pin that when set HIGH turns the plug on, and off when LOW.<br>
+An API is also available to control many smartplugs as well as reporting on power and voltage statistics provided by the smartplug. 
 
-![Example wiring](hardware/example_wiring.jpg)
-In the example above, Arduino pin 11 turns the plug on when HIGH, off when LOW. 
+![Example wiring](hardware/uno_i2c_wiring.jpg)
+In the example above, Arduino is connected to an ESP32 using logic level translator. Arduino pin A5 used as a digital output turns a plug on when HIGH, off when LOW. Pin A4 controls the plug on ip address 192.168.4.13.  Arduino pin A5 ontrols the plug on ip address 192.168.4.12. Note the level translator is not required when connected to 3.3 volt Arduino boards.
+
+The diagram below shows The PCB that supports additional features such as reading plug energy usage and wireless signal strength. As many plugs can be controlled as can be connected to the ESP32 access point. 
+![Example wiring using Tasmota library](hardware/Gateway_PCB_i2c.jpg)  
 
 ## Functional Overview
 
@@ -36,21 +40,34 @@ Open the cloned project folder in PlatformIO, available as a VS Code extension. 
 
 ### Editing `config.json`
 
-The `data` directory contains `config.json`, a template for your smart plug configuration. Customize it with the MAC addresses of your smart plugs and the corresponding control pins on the ESP32. Note these pin numbers refer to the ESP32, you can connect the Arduino pin of your choice to this pin. IMPORTANT - the ESP32 is not 5v tolerant, use voltage level tranlation with 5 volt Arduinos. Note that SPI control mode is not supported in this version.
+The `data` directory contains `config.json`, a template for your smart plug configuration. Customize it with the MAC addresses of your smart plugs and the corresponding control pins on the ESP32. Note these pin numbers refer to the ESP32, you can connect the Arduino pin of your choice to this pin. IMPORTANT - the ESP32 is not 5v tolerant, use voltage level translation with 5 volt Arduinos. 
+
+In the example below, plugs at IP address 192.168.4.13 and 12 will be controlled by setting ESP pins 6 and 7 (unless the I2C jumper is set) 
 
 ```json
 {
-  "I2C_controlMode": true,
-  "esp_pin_map": [6,7],
-  "plug_ip": [13,12, 11],
-  "plug_mac4": ["EA2D", "E946", "14F0"]
+  "plug_ip": [13,12],
+  "plugs_per_ip":[1,1],
+  "esp_pin_map": [6,7]
 }
 ```
 
 ### Uploading `config.json` to ESP32
+PlatformIo will auto detect the USB serial port if a single device is connected. If the correct ESP is not auto detected you can specify a com port in the platformio.ini file by uncommenting  'upload_port = xxxx' and entering the correct port
 
-With the ESP32 USB port connected to the computer running Platformio, PlatformIO's "Upload File System Image" task to upload your configuration file to the ESP32. This step is crucial for the middleware to recognize and control your smart plugs. This task is accessed by clicking the Platformio (alien head) icon -> PROJECT TASKS -> esp32-c3 tasks -> Platform -> Upload File System Image 
+With the ESP32 USB port connected to the computer running Platformio, PlatformIO's "Upload File System Image" task to upload your configuration file to the ESP32.
 
+To do this:
+  - Click:  PlatformIO (the 'alien head') icon in the sidebar
+  - Under PROJECT TASKS, Click: esp32-c3 (assuming you are using the XIAO ESP32-C3)
+  - Click: Upload Filesystem Image
+
+This step is crucial for the middleware to recognize and control your smart plugs. Missing or incorrect config.json data is the most common cause of unresponsive plugs.
+
+### Compiling and uploading the sketch to ESP32
+Compile and upload by clicking the right-arrow icon on the lower toolbar. Other useful icons on this toolbar are:
+  - checkmark - complile (but don't upload)
+  - trashcan - clean (deletes compiled objects when a complete rebuild is necessary, such as after modifying build flags) 
 
 ## Pairing Middleware with Smart Plugs
 

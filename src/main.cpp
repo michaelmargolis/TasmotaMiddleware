@@ -20,7 +20,7 @@
 #include "i2cInterface.h"
 
 
-#define  SPOOF_MAC "3341"  // overrides hardware MAC if defined 
+//#define  SPOOF_MAC "3341"  // if defined, overrides hardware MAC for testing fixed SSID 
 
 static const int PRIMARY_I2C_ADDR_PIN = 21;    // jumper this pin low to use primary I2C address
 static const int SECONDARY_I2C_ADDR_PIN  = 5;  // or jumper this pin low to use secondary I2C address

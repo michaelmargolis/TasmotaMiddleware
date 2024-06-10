@@ -1,5 +1,5 @@
 {
-  "esp_pin_map": [6,7],
   "plug_ip": [13,12],
-  "plugs_per_ip":[1,1]
+  "plugs_per_ip":[1,1],
+  "esp_pin_map": [6,7]
 }
